@@ -30,18 +30,17 @@ func main() {
 	fmt.Println("honeypot listening on :2222")
 	fmt.Println("try: nc localhost 2222")
 
+	// Forever loop that creates tcp connections with clients
 	for {
-		// Create a connection
 		c, err := listener.Accept()
 		if err != nil {
 			log.Println("Error accepting connection", err)
 		}
 
-		// Retrieve client address and network type
-		userAddr := c.RemoteAddr().String()
-		userNetwork := c.RemoteAddr().Network()
+		clientAddress := c.RemoteAddr().String()
+		clientNetworkType := c.RemoteAddr().Network()
 
-		// fake SSH banner to bait them
+		// fake SSH banner to bait attackers
 		n, err := c.Write([]byte("SSH-2.0-OpenSSH_7.4\r\n"))
 		if err != nil {
 			log.Println(fmt.Errorf("Error writing banner to connection: %w\n", err))
@@ -49,7 +48,7 @@ func main() {
 		fmt.Printf("wrote %d bytes\n", n)
 
 		// launch connections in a go routine -- so we can have more than one connection
-		go handleConnection(c, userAddr, userNetwork)
+		go handleConnection(c, clientAddress, clientNetworkType)
 	}
 }
 
@@ -92,7 +91,7 @@ func handleConnection(c net.Conn, userAddr, userNetwork string) {
 		// Remove any '\n' or '\r' to prevent log injections
 		safeMessage := sanitizeMessage(message)
 
-		// TODO: convertAddressToCountry
+		// TODO: convertAddressToCountry -- or could do this on the frontend
 
 		// Package data into an object
 		attempt := Attempt{

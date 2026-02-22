@@ -31,7 +31,6 @@ func main() {
 	}
 
 	r.Use(httprate.LimitAll(REQUEST_LIMIT, WINDOW_LENGTH))
-	r.Use(AuthMiddleware)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: origins,
 		AllowedMethods: []string{"GET", "POST", "DELETE", "OPTIONS"},
@@ -56,8 +55,14 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
+// TODO: This is in progess
 func AuthMiddleware(next http.Handler) http.Handler {
 	hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		apiKeyFromRequest := r.Header.Get("X-API-KEY")
 		secretKey := "my-secret-key"
 
